@@ -2,37 +2,34 @@ from flask import Flask, render_template, request
 import openai
 
 
+#create a file called 'apikey.json' in your root direvtory and add your api key in it
+#Sample: {"key": "YOUR_API_KEY_HERE"}
+
+
+openai.api_key = "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"
+
 app = Flask(__name__)
 
-# Set up OpenAI API credentials
-openai.api_key = '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'
-
-
-# Define the default route to return the index.html file
 @app.route("/")
-def index():
+def home():
     return render_template("index.html")
 
-# Define the /api route to handle POST requests
-@app.route("/api", methods=["POST"])
-def api():
-    # Get the message from the POST request
-    message = request.json.get("message")
-    # Send the message to OpenAI's API and receive the response
+@app.route("/get_response", methods=["POST"])
+def get_response():
+    user_prompt = request.form["user_input"]
+    prompt_to_be_sent = f"You: {user_prompt}\nAssistant: "
     
     
-    completion = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=[
-        {"role": "user", "content": message}
-    ]
-    )
-    if completion.choices[0].message!=None:
-        return completion.choices[0].message
+    response = openai.completions.create(
+        model="gpt-3.5-turbo-instruct",
+            prompt=prompt_to_be_sent,
+            max_tokens=100,
+            temperature=0.9
+            )
+    
+    assistant_response = response.choices[0].text.strip()
 
-    else :
-        return 'Failed to Generate response!'
-    
+    return render_template("index.html", user_prompt=user_prompt, response_text=assistant_response)
 
-if __name__=='__main__':
-    app.run(debug = True)
+if __name__ == "__main__":
+    app.run(debug=True)
